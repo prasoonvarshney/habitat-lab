@@ -1095,6 +1095,7 @@ class TaskConfig(HabitatBaseConfig):
     episode_init: bool = False
     camera_tilt: float = -0.5236
     receptacle_categories_file: str = ""
+    video_save_folder: str = 'videos_from_task/'
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -1231,8 +1232,8 @@ class ArmDepthSensorConfig(HabitatSimDepthSensorConfig):
 @attr.s(auto_attribs=True, slots=True)
 class ThirdRGBSensorConfig(HabitatSimRGBSensorConfig):
     uuid: str = "robot_third_rgb"
-    width: int = 512
-    height: int = 512
+    width: int = 1920
+    height: int = 1080
     hfov: int = 120
 
 
