@@ -1,18 +1,18 @@
-open_cab:
-  skill_name: "ArtObjSkillPolicy"
-  load_ckpt_file: "data/models/open_cab.pth"
+# open_cab:
+#   skill_name: "ArtObjSkillPolicy"
+#   load_ckpt_file: "data/models/open_cab.pth"
 
-open_fridge:
-  skill_name: "ArtObjSkillPolicy"
-  load_ckpt_file: "data/models/open_fridge.pth"
+# open_fridge:
+#   skill_name: "ArtObjSkillPolicy"
+#   load_ckpt_file: "data/models/open_fridge.pth"
 
-close_cab:
-  skill_name: "ArtObjSkillPolicy"
-  load_ckpt_file: "data/models/close_cab.pth"
+# close_cab:
+#   skill_name: "ArtObjSkillPolicy"
+#   load_ckpt_file: "data/models/close_cab.pth"
 
-close_fridge:
-  skill_name: "ArtObjSkillPolicy"
-  load_ckpt_file: "data/models/close_fridge.pth"
+# close_fridge:
+#   skill_name: "ArtObjSkillPolicy"
+#   load_ckpt_file: "data/models/close_fridge.pth"
 
 pick:
   skill_name: "PickSkillPolicy"
@@ -29,13 +29,13 @@ wait:
   max_skill_steps: -1
   force_end_on_timeout: False
 
-nav_to_obj:
-  skill_name: "NavSkillPolicy"
-  obs_skill_inputs: ["goal_to_agent_gps_compass"]
-  load_ckpt_file: "data/models/nav.pth"
-  max_skill_steps: 300
-  obs_skill_input_dim: 2
-  pddl_action_names: ["nav", "nav_to_receptacle"]
+# nav_to_obj:
+#   skill_name: "NavSkillPolicy"
+#   obs_skill_inputs: ["goal_to_agent_gps_compass"]
+#   load_ckpt_file: "data/models/nav.pth"
+#   max_skill_steps: 300
+#   obs_skill_input_dim: 2
+#   pddl_action_names: ["nav", "nav_to_receptacle"]
 
 reset_arm:
   skill_name: "ResetArmSkill"

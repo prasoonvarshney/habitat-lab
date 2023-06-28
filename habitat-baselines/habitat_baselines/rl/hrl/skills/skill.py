@@ -14,7 +14,7 @@ from habitat_baselines.common.logging import baselines_logger
 from habitat_baselines.rl.hrl.utils import find_action_range
 from habitat_baselines.rl.ppo.policy import Policy, PolicyActionData
 from habitat_baselines.utils.common import get_num_actions
-
+import json
 
 class SkillPolicy(Policy):
     def __init__(
@@ -198,6 +198,7 @@ class SkillPolicy(Policy):
                 is_skill_done = is_skill_done | over_max_len
 
         is_skill_done |= hl_wants_skill_term
+        print(f"adhok testing {self}, is-skill-done: {is_skill_done}")
 
         new_actions = torch.zeros_like(actions)
         for i, env_i in enumerate(batch_idx):

@@ -173,6 +173,7 @@ class PPOTrainer(BaseRLTrainer):
         self._single_proc_infos: Dict[str, List[float]] = {}
 
     def _init_train(self, resume_state=None):
+        print("Initializing PPO training...")
         if resume_state is None:
             resume_state = load_resume_state(self.config)
 

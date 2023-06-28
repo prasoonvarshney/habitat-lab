@@ -361,7 +361,8 @@ def overlay_frame(frame, info, additional=None):
             lines.append(f"{k}: {v:.2f}")
     if additional is not None:
         lines.extend(additional)
+    
 
-    frame = overlay_text_to_image(frame, lines, font_size=0.25)
+    frame = overlay_text_to_image(frame, [], font_size=0.25)
 
     return frame

@@ -38,14 +38,14 @@ close_fridge:
 pick:
   skill_name: "NoopSkillPolicy"
   obs_skill_inputs: ["obj_start_sensor"]
-  max_skill_steps: 1
+  max_skill_steps: 5
   apply_postconds: True
   force_end_on_timeout: False
 
 place:
   skill_name: "NoopSkillPolicy"
   obs_skill_inputs: ["obj_goal_sensor"]
-  max_skill_steps: 1
+  max_skill_steps: 5
   apply_postconds: True
   force_end_on_timeout: False
 

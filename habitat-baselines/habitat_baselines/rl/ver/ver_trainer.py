@@ -72,7 +72,7 @@ class VERTrainer(PPOTrainer):
         )(
             config=self.config,
             env_spec=self._env_spec,
-            is_distrib=self._is_distributed,
+            is_distrib=False,
             device=self.device,
             resume_state=resume_state,
             num_envs=self.config.habitat_baselines.num_environments,
@@ -85,6 +85,7 @@ class VERTrainer(PPOTrainer):
             not self.config.habitat.simulator.renderer.enable_batch_renderer
         ), "VER trainer does not support batch rendering."
 
+        self._is_distributed = False
         if self._is_distributed:
             local_rank, world_rank, _ = get_distrib_size()
 
@@ -116,7 +117,7 @@ class VERTrainer(PPOTrainer):
 
         if self.config.habitat_baselines.rl.ddppo.force_distributed:
             self._is_distributed = True
-
+        self._is_distributed = False
         if is_slurm_batch_job():
             add_signal_handlers()
 
@@ -465,7 +466,14 @@ class VERTrainer(PPOTrainer):
         if self.ver_config.overlap_rollouts_and_learn:
             self.preemption_decider.start_rollout()
 
+        count = 0
         while not self.is_done():
+            
+            if count % 100 == 0:
+                print(f"TRAINING LOOP: {count} steps complete.")
+            
+            count += 1
+            exit(0)
             profiling_wrapper.on_start_step()
 
             self._agent.pre_rollout()
