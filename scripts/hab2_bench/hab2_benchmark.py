@@ -60,11 +60,11 @@ class HabDemoRunner:
                 # Won't count the time of a pre-step
                 profile_sums["time"] += step_time
 
-            if self.args.render:
+            if True:
                 for _ in range(self.args.n_procs):
                     final_vid.append(obs)
 
-        if self.args.render and len(final_vid) > 0:
+        if True:
             from habitat_sim.utils import viz_utils as vut
 
             # TODO: setup an optional 3rd person render camera for debugging
@@ -72,8 +72,8 @@ class HabDemoRunner:
                 final_vid,
                 "head_rgb",
                 "color",
-                "data/profile/benchmark_render_output",
-                open_vid=True,
+                "data/profile/benchmark_render_output" + str(time.time()),
+                open_vid=False,
             )
 
         return dict(profile_sums)

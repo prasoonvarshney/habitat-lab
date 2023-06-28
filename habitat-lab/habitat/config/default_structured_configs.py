@@ -627,7 +627,7 @@ class SuccessMeasurementConfig(MeasurementConfig):
     :property success_distance: The minimal distance the robot must be to the goal for a success.
     """
     type: str = "Success"
-    success_distance: float = 0.2
+    success_distance: float = 0.01
 
 
 @dataclass
@@ -842,7 +842,7 @@ class NavToPosSuccMeasurementConfig(MeasurementConfig):
     Rearrangement Navigation task only. The value is 1.0 if the robot is within success_distance of the goal position.
     """
     type: str = "NavToPosSucc"
-    success_distance: float = 1.5
+    success_distance: float = 0.01
 
 
 @dataclass
@@ -881,7 +881,7 @@ class NavToObjSuccessMeasurementConfig(MeasurementConfig):
     must_look_at_targ: bool = True
     must_call_stop: bool = True
     # distance in radians.
-    success_angle_dist: float = 0.261799
+    success_angle_dist: float = 0.0872663333
 
 
 @dataclass
@@ -895,7 +895,7 @@ class RearrangeReachRewardMeasurementConfig(MeasurementConfig):
 @dataclass
 class RearrangeReachSuccessMeasurementConfig(MeasurementConfig):
     type: str = "RearrangeReachSuccess"
-    succ_thresh: float = 0.2
+    succ_thresh: float = 0.05
 
 
 @dataclass
@@ -921,7 +921,7 @@ class DidViolateHoldConstraintMeasurementConfig(MeasurementConfig):
 class MoveObjectsRewardMeasurementConfig(MeasurementConfig):
     type: str = "MoveObjectsReward"
     pick_reward: float = 1.0
-    success_dist: float = 0.15
+    success_dist: float = 0.01
     single_rearrange_reward: float = 1.0
     dist_reward: float = 1.0
     constraint_violate_pen: float = 10.0
@@ -963,7 +963,7 @@ class RearrangePickSuccessMeasurementConfig(MeasurementConfig):
     Rearrangement Only. Requires the end_effector_sensor lab sensor. 1.0 if the robot picked the target object.
     """
     type: str = "RearrangePickSuccess"
-    ee_resting_success_threshold: float = 0.15
+    ee_resting_success_threshold: float = 0.01
 
 
 @dataclass
@@ -974,8 +974,7 @@ class ObjAtGoalMeasurementConfig(MeasurementConfig):
     :property succ_thresh: The threshold distance below which an object is considered at the goal location.
     """
     type: str = "ObjAtGoal"
-    succ_thresh: float = 0.15
-
+    succ_thresh: float = 0.01
 
 @dataclass
 class PlaceRewardMeasurementConfig(MeasurementConfig):
@@ -999,7 +998,7 @@ class PlaceRewardMeasurementConfig(MeasurementConfig):
     force_pen: float = 0.0001
     max_force_pen: float = 0.0
     force_end_pen: float = 1.0
-    min_dist_to_goal: float = 0.15
+    min_dist_to_goal: float = 0.01
 
 
 @dataclass
@@ -1008,7 +1007,7 @@ class PlaceSuccessMeasurementConfig(MeasurementConfig):
     Rearrangement Only. Requires the end_effector_sensor lab sensor. 1.0 if the robot placed the target object on the goal position and has its end effector within ee_resting_success_threshold of its resting position.
     """
     type: str = "PlaceSuccess"
-    ee_resting_success_threshold: float = 0.15
+    ee_resting_success_threshold: float = 0.01
 
 
 @dataclass
@@ -1178,7 +1177,7 @@ class TaskConfig(HabitatBaseConfig):
     obj_succ_thresh: float = 0.3
     # Disable drop except for when the object is at its goal.
     enable_safe_drop: bool = False
-    art_succ_thresh: float = 0.15
+    art_succ_thresh: float = 0.01
     robot_at_thresh: float = 2.0
     actions: Dict[str, ActionConfig] = MISSING
 

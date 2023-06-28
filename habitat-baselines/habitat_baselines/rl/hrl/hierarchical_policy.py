@@ -151,7 +151,7 @@ class HierarchicalPolicy(nn.Module, Policy):
             full_config.habitat.task.task_spec + ".yaml",
         )
         domain_file = full_config.habitat.task.pddl_domain_def
-
+        print(f"adhok testing2: {domain_file}, task_spec: {task_spec_file}")
         return PddlProblem(
             domain_file,
             task_spec_file,

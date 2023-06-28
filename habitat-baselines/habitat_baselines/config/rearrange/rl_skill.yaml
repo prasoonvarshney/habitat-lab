@@ -15,7 +15,8 @@ habitat_baselines:
   video_dir: "video_dir"
   video_fps: 30
   test_episode_count: -1
-  eval_ckpt_path_dir: "data/new_checkpoints"
+  eval_ckpt_path_dir: "data/pick_checkpoints"
+  checkpoint_folder: "data/pick_checkpoints"
   # 26 environments will just barely be below 16gb.
   # num_environments: 26
   # 18 environments will just barely be below 11gb.
@@ -84,3 +85,5 @@ habitat_baselines:
       backbone: resnet18
       rnn_type: LSTM
       num_recurrent_layers: 2
+
+      force_distributed: False

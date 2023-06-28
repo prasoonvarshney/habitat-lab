@@ -15,6 +15,7 @@ class NoopSkillPolicy(SkillPolicy):
         batch_size,
     ):
         super().__init__(config, action_space, batch_size, False)
+        print(f"adhok testing: noopskillpolicy: starting initialization of the noopskill policy")
 
     def _parse_skill_arg(self, *args, **kwargs) -> Any:
         pass
@@ -34,6 +35,7 @@ class NoopSkillPolicy(SkillPolicy):
         full_action,
         deterministic=False,
     ):
+        print(f"adhok testing: noopskillpolicy: {full_action}")
         return PolicyActionData(
             actions=full_action, rnn_hidden_states=rnn_hidden_states
         )

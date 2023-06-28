@@ -15,19 +15,13 @@ defaults:
 habitat:
   gym:
     obs_keys:
-      - head_depth
-      - relative_resting_position
-      - obj_start_sensor
-      - obj_goal_sensor
-      - obj_start_gps_compass
-      - obj_goal_gps_compass
-      - joint
       - is_holding
-      - ee_pos
+      - joint
       - localization_sensor
   simulator:
     habitat_sim_v0:
       allow_sliding: True
+    debug_render_goal: False
 
 habitat_baselines:
   rl:
@@ -39,3 +33,5 @@ habitat_baselines:
             skill_name: "OracleNavPolicy"
             obs_skill_inputs: ["obj_start_sensor", "abs_obj_start_sensor", "obj_goal_sensor", "abs_obj_goal_sensor"]
             max_skill_steps: 300
+
+  video_fps: 60
