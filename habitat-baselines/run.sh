@@ -5,7 +5,7 @@ export MAGNUM_GPU_VALIDATION=ON
 export CUDA_LAUNCH_BLOCKING=1
 export HYDRA_FULL_ERROR=1
 
-rm -rf /home/ubuntu/habitat-exp/habitat-lab/video_dir/*.mp4
+rm -rf ~/habitat-lab/video_dir/*.mp4
 
 python3 -u -m habitat_baselines.run \
   --config-name=rearrange/rl_hierarchical_oracle_nav.yaml \
