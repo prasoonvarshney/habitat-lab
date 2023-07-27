@@ -7,6 +7,7 @@
 import os.path as osp
 import random
 import time
+import json
 from collections import defaultdict
 
 try:
@@ -189,6 +190,7 @@ class RearrangeEpisodeGenerator:
         self._obj_samplers: Dict[str, samplers.ObjectSampler] = {}
 
         for obj_sampler_info in self.cfg.object_samplers:
+            print(obj_sampler_info)
             assert "name" in obj_sampler_info
             assert "type" in obj_sampler_info
             assert "params" in obj_sampler_info
@@ -455,7 +457,7 @@ class RearrangeEpisodeGenerator:
         }
 
         ep_scene_handle = self.generate_scene()
-        scene_base_dir = osp.dirname(osp.dirname(ep_scene_handle))
+        scene_base_dir = osp.dirname(osp.dirname(osp.dirname(ep_scene_handle)))
 
         recep_tracker.init_scene_filters(
             mm=self.sim.metadata_mediator, scene_handle=ep_scene_handle
@@ -463,7 +465,7 @@ class RearrangeEpisodeGenerator:
 
         scene_name = ep_scene_handle.split(".")[0]
         navmesh_path = osp.join(
-            scene_base_dir, "navmeshes", scene_name + ".navmesh"
+            "/home/pvarshne/home-robot", scene_base_dir, "navmeshes", scene_name + ".navmesh"
         )
         self.sim.pathfinder.load_nav_mesh(navmesh_path)
 

@@ -131,6 +131,7 @@ object_samplers:
   -
     name: "clutter"
     type: "uniform"
+    sampler_range: "fixed"
     params:
       object_sets: ["hab2"]
       receptacle_sets: ["clutter"]
@@ -139,6 +140,7 @@ object_samplers:
   -
     name: "any_targets"
     type: "uniform"
+    sampler_range: "fixed"
     params:
       object_sets: ["hab2"]
       receptacle_sets: ["hab2_recep", "hab2"]

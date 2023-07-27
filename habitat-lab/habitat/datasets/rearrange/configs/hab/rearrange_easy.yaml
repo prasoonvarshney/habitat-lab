@@ -83,10 +83,11 @@ object_samplers:
   -
     name: "any_targets"
     type: "uniform"
+    sampler_range: "fixed"
     params:
       object_sets: ["hab2"]
       receptacle_sets: ["hab2"]
-      num_samples: [30, 30]
+      num_samples: [1, 3]
       orientation_sampling: "up"
 
 object_target_samplers:
