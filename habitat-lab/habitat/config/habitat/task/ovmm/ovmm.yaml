@@ -3,6 +3,10 @@
 defaults:
   - /habitat/task: task_config_base
   - /habitat/task/actions:
+    - stop
+    - move_forward
+    - turn_left
+    - turn_right
     - rearrange_stop
     - base_velocity
     - arm_action
