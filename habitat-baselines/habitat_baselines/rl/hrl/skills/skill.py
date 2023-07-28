@@ -26,7 +26,11 @@ class SkillPolicy(Policy):
         :param action_space: The overall action space of the entire task, not task specific.
         """
         self._config = config
+        self.should_ignore_grip = config.ignore_grip
         self._batch_size = batch_size
+        self._apply_postconds = self._config.apply_postconds
+        self._force_end_on_timeout = self._config.force_end_on_timeout
+        self._max_skill_steps = self._config.max_skill_steps
 
         self._cur_skill_step = torch.zeros(self._batch_size)
         self._should_keep_hold_state = should_keep_hold_state
@@ -37,6 +41,18 @@ class SkillPolicy(Policy):
         self._raw_skill_args: List[Optional[str]] = [
             None for _ in range(self._batch_size)
         ]
+        self._full_ac_size = get_num_actions(action_space)
+
+        # TODO: for some reason this doesnt work with "pddl_apply_action" in action_space
+        # and needs to go through the keys argument
+        if "pddl_apply_action" in list(action_space.keys()):
+            self._pddl_ac_start, _ = find_action_range(
+                action_space, "pddl_apply_action"
+            )
+        else:
+            self._pddl_ac_start = None
+        if self._apply_postconds and self._pddl_ac_start is None:
+            raise ValueError(f"Could not find PDDL action in skill {self}")
 
         self._grip_ac_idx = 0
         found_grip = False
@@ -48,8 +64,9 @@ class SkillPolicy(Policy):
                 self._grip_ac_idx += get_num_actions(space) - 1
                 found_grip = True
                 break
-        if not found_grip:
+        if not found_grip and not self.should_ignore_grip:
             raise ValueError(f"Could not find grip action in {action_space}")
+
         self._stop_action_idx, _ = find_action_range(
             action_space, "rearrange_stop"
         )

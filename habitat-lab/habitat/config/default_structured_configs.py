@@ -173,6 +173,11 @@ class ManipulationModeActionConfig(ActionConfig):
 
 
 @attr.s(auto_attribs=True, slots=True)
+class PddlApplyActionConfig(ActionConfig):
+    type: str = "PddlApplyAction"
+
+
+@attr.s(auto_attribs=True, slots=True)
 class OracleNavActionConfig(ActionConfig):
     """
     Oracle navigation action.
@@ -984,6 +989,10 @@ class CompositeRewardMeasurementConfig(MeasurementConfig):
     must_call_stop: bool = True
     success_reward: float = 10.0
 
+@attr.s(auto_attribs=True, slots=True)
+class CompositeSubgoalReward(MeasurementConfig):
+    type: str = "CompositeSubgoalReward"
+    stage_sparse_reward: float = 1.0
 
 @attr.s(auto_attribs=True, slots=True)
 class DoesWantTerminateMeasurementConfig(MeasurementConfig):
@@ -1555,6 +1564,12 @@ cs.store(
     group="habitat/task/actions",
     name="oracle_nav_action",
     node=OracleNavActionConfig,
+)
+cs.store(
+    package="habitat.task.actions.pddl_apply_action",
+    group="habitat/task/actions",
+    name="pddl_apply_action",
+    node=PddlApplyActionConfig,
 )
 
 # Dataset Config Schema
@@ -2130,6 +2145,12 @@ cs.store(
     group="habitat/task/measurements",
     name="does_want_terminate",
     node=DoesWantTerminateMeasurementConfig,
+)
+cs.store(
+    package="habitat.task.measurements.composite_subgoal_reward",
+    group="habitat/task/measurements",
+    name="composite_subgoal_reward",
+    node=CompositeSubgoalReward,
 )
 cs.store(
     package="habitat.task.measurements.composite_success",
