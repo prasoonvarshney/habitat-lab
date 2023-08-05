@@ -70,7 +70,7 @@ class ShortestPathFollower:
             return action
 
     def get_next_action(
-        self, goal_pos: Union[List[float], np.ndarray]
+        self, goal_pos: Union[List[float], np.ndarray], log_file_handle = None
     ) -> Optional[Union[int, np.ndarray]]:
         """Returns the next action along the shortest path."""
         self._build_follower()
@@ -84,6 +84,10 @@ class ShortestPathFollower:
                 )
                 curr_pos = self._sim.robot.base_pos
             # Get the target rotation
+            if log_file_handle is not None:
+                log_file_handle.write(f"Current position:\t{curr_pos}, {curr_rot}\n")
+                log_file_handle.write(f"Short-term goal:\t{goal_pos}\n")
+                log_file_handle.write(f"Distance from short-term goal: {np.linalg.norm(goal_pos - curr_pos, ord=2)}\n")
             next_action = self._follower.next_action_along(goal_pos, curr_rot=curr_rot, curr_pos=curr_pos)
         except habitat_sim.errors.GreedyFollowerError as e:
             if self._stop_on_error:
