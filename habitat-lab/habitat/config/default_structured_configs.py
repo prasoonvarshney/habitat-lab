@@ -1233,6 +1233,7 @@ class ThirdRGBSensorConfig(HabitatSimRGBSensorConfig):
     uuid: str = "robot_third_rgb"
     width: int = 512
     height: int = 512
+    hfov: int = 120
 
 
 @attr.s(auto_attribs=True, slots=True)
