@@ -99,7 +99,7 @@ class MobileManipulatorParams:
 
 class MobileManipulator(Manipulator, RobotBase):
     """Robot with a controllable base and arm."""
-
+    cls_uuid: str = "mobile_manipulator"
     def __init__(
         self,
         params: MobileManipulatorParams,
