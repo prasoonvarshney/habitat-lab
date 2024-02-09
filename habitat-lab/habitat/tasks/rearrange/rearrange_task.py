@@ -6,6 +6,7 @@
 
 import copy
 import os.path as osp
+import os
 from collections import OrderedDict
 from typing import Any, Dict, List, Tuple, Union
 
@@ -28,7 +29,7 @@ from habitat.tasks.rearrange.utils import (
     rearrange_collision,
     rearrange_logger,
 )
-
+from habitat.utils.visualizations.utils import images_to_video
 
 @registry.register_task(name="RearrangeEmptyTask-v0")
 class RearrangeTask(NavigationTask):
@@ -106,7 +107,7 @@ class RearrangeTask(NavigationTask):
             osp.dirname(data_path),
             f"{fname}_{self._config.type}_robot_start.pickle",
         )
-
+        self._video_save_folder = self._config.video_save_folder
         if self._config.should_save_to_cache or osp.exists(cache_path):
             self._articulated_agent_init_cache = CacheHelper(
                 cache_path,
@@ -122,6 +123,8 @@ class RearrangeTask(NavigationTask):
         if len(self._sim.agents_mgr) > 1:
             # Duplicate sensors that handle articulated agents. One for each articulated agent.
             self._duplicate_sensor_suite(self.sensor_suite)
+        self._metrics_at_step = None
+        self._frames = None
 
     def overwrite_sim_config(self, config: Any, episode: Episode) -> Any:
         return config
@@ -198,7 +201,15 @@ class RearrangeTask(NavigationTask):
 
     @add_perf_timing_func()
     def reset(self, episode: Episode, fetch_observations: bool = True):
+        # if self._frames is not None and len(self._frames) > 0:
+        #     # save as video
+        #     images_to_video(self._frames, self._video_save_folder, self._episode_id, fps=24, quality=5)
+        # os.makedirs(f'{self._video_save_folder}/snaps/{self._episode_id}/', exist_ok=True)
+        self._frames = []
+        self._metrics_at_step = []
+
         self._episode_id = episode.episode_id
+
         self._ignore_collisions = []
 
         if self._sim_reset:
@@ -264,6 +275,7 @@ class RearrangeTask(NavigationTask):
         )
 
     def step(self, action: Dict[str, Any], episode: Episode):
+        self._metrics_at_step = []  # reset metrics; populated inside the action
         if "action_args" not in action or action["action_args"] is None:
             action["action_args"] = {}
         action_args = action["action_args"]
@@ -284,6 +296,33 @@ class RearrangeTask(NavigationTask):
                 grasp_mgr.desnap(True)
 
         return obs
+
+    def report_metrics_at_step(self, action, is_interpolated=False):
+        metrics = self.measurements.get_metrics()
+        return {
+            "timestep": self._cur_episode_step + 1,
+            "entry_type": "simulator_step",
+            "simulator_action": action.__class__.__name__,
+            "is_interpolated": int(is_interpolated),
+            "curr_agent_pos": list(action.cur_articulated_agent.base_pos),
+            "curr_agent_rot": float(action.cur_articulated_agent.base_rot),
+            "curr_agent_joints": action.cur_articulated_agent.arm_joint_pos.tolist(),
+            "curr_nav_goal": self._sim.ep_info.candidate_objects[0].position,
+
+            # pick goal metrics
+            "dist_agent_to_pick_goal": metrics["ovmm_dist_to_pick_goal"],
+            "rot_dist_agent_to_pick_goal": metrics["ovmm_rot_dist_to_pick_goal"],
+            "pick_goal_iou_coverage": metrics["pick_goal_iou_coverage"],
+
+            # place goal metrics
+            "dist_agent_to_place_goal": metrics["ovmm_dist_to_place_goal"],
+            "rot_dist_agent_to_place_goal": metrics["ovmm_rot_dist_to_place_goal"],
+            "dist_object_to_place_goal": metrics["ovmm_object_to_place_goal_distance"]["0"],
+            "place_goal_iou_coverage": metrics["place_goal_iou_coverage"],
+
+            "is_grasped": action.cur_grasp_mgr.is_grasped,
+            "is_navmesh_violated": self._is_navmesh_violated,
+        }
 
     def _check_episode_is_active(
         self,

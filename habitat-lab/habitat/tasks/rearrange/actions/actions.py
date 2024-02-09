@@ -5,11 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import Optional
-
+import cv2
 import magnum as mn
 import numpy as np
 from gym import spaces
-
+import time
 import habitat_sim
 from habitat.articulated_agents.robots.stretch_robot import (
     StretchJointStates,
@@ -33,7 +33,7 @@ from habitat.tasks.rearrange.actions.grip_actions import (
 )
 from habitat.tasks.rearrange.rearrange_sim import RearrangeSim
 from habitat.tasks.rearrange.utils import rearrange_collision, rearrange_logger
-
+import cv2
 
 @registry.register_task_action
 class EmptyAction(ArticulatedAgentAction):
@@ -113,7 +113,7 @@ class ArmAction(ArticulatedAgentAction):
 
     def step(self, *args, **kwargs):
         arm_action = kwargs[self._action_arg_prefix + "arm_action"]
-        self.arm_ctrlr.step(arm_action)
+        self.arm_ctrlr.step(arm_action, *args, **kwargs)
         if self.grip_ctrlr is not None and not self.disable_grip:
             grip_action = kwargs[self._action_arg_prefix + "grip_action"]
             self.grip_ctrlr.step(grip_action)
@@ -316,7 +316,7 @@ class ArmRelPosKinematicReducedActionStretch(ArticulatedAgentAction):
             dtype=np.float32,
         )
 
-    def step(self, delta_pos, *args, **kwargs):
+    def step(self, delta_pos, *args, task, **kwargs):
         if self._should_clip:
             # clip from -1 to 1
             delta_pos = np.clip(delta_pos, -1, 1)
@@ -353,9 +353,40 @@ class ArmRelPosKinematicReducedActionStretch(ArticulatedAgentAction):
                     set_arm_pos[i + 1] -= min_limit[i] - set_arm_pos[i]
                     set_arm_pos[i] = min_limit[i]
         set_arm_pos = np.clip(set_arm_pos, min_limit, max_limit)
+        curr_arm_pos = self.cur_articulated_agent.arm_motor_pos
+        delta = set_arm_pos - curr_arm_pos
+        max_allowed_delta = np.array([0.01, 0.01, 0.01, 0.01, 0.04] + [np.pi/36]* 5)
+        if np.allclose(delta, 0, atol=1e-3):
+            return
+        num_steps = max(np.ceil(np.max(delta/max_allowed_delta)), 1)
+        
+        interpolation = 1.0/num_steps
 
-        self.cur_articulated_agent.arm_motor_pos = set_arm_pos
-        self.cur_articulated_agent.arm_joint_pos = set_arm_pos
+        delta_per_step = (delta) * interpolation
+        for idx in range(int(num_steps)):
+            # cv2.imwrite(f'{task._video_save_folder}/snaps/{task._episode_id}/timestep_{len(task._frames)}.png', obs[...,::-1])
+            sensor_obs = self._sim.get_sensor_observations()
+            task._frames.append({
+                "head_rgb": sensor_obs['head_rgb'][:,:,:3],
+                "head_depth": sensor_obs['head_depth'],
+                # np.expand_dims(sensor_obs['head_depth'], axis=2)
+                "third_rgb": sensor_obs['third_rgb'][:,:,:3],
+            })
+            is_interpolated = idx < num_steps - 1
+            curr_arm_pos = curr_arm_pos + delta_per_step
+            self.cur_articulated_agent.arm_motor_pos = curr_arm_pos
+            self.cur_articulated_agent.arm_joint_pos = curr_arm_pos
+            self._sim.maybe_update_articulated_agent()
+            task._metrics_at_step.append(task.report_metrics_at_step(action=self, is_interpolated=is_interpolated))
+
+        if (not np.allclose(self.cur_articulated_agent.arm_motor_pos, set_arm_pos)
+            or not np.allclose(self.cur_articulated_agent.arm_joint_pos, set_arm_pos)):
+            # if due to rounding errors, the arm is not set to the desired position, set it to the desired position
+            self.cur_articulated_agent.arm_motor_pos = set_arm_pos
+            self.cur_articulated_agent.arm_joint_pos = set_arm_pos
+            self._sim.maybe_update_articulated_agent()
+            task._metrics_at_step.append(task.report_metrics_at_step(action=self, is_interpolated=False))
+
         if self.cur_grasp_mgr.snap_idx is not None:
             # Holding onto an object, also kinematically update the object.
             self.cur_grasp_mgr.update_object_to_grasp()
@@ -895,54 +926,74 @@ class BaseWaypointTeleportAction(ArticulatedAgentAction):
             lin_pos_z = np.sign(lin_pos_z) if lin_pos_z != 0 else 0
             turn = np.sign(turn) if turn != 0 else 0
 
-        lin_pos_x = (
-            np.clip(lin_pos_x, -1, 1) * self._max_displacement_along_axis
-        )
-        lin_pos_z = (
-            np.clip(lin_pos_z, -1, 1) * self._max_displacement_along_axis
-        )
-        ang_pos = np.clip(turn, -1, 1) * self._max_turn_radians
+        max_base_forward_delta = 0.15
+        max_turn_delta = 0.025
+        if lin_pos_x == 0 and lin_pos_z == 0 and turn == 0:
+            return
+        num_steps = max(int(np.ceil(max([lin_pos_x / max_base_forward_delta, lin_pos_z / max_base_forward_delta, turn / max_turn_delta]))), 1)
+        
+        for idx in range(num_steps):
+            interpolation = 1.0 / num_steps
+            # cv2.imwrite(f'{task._video_save_folder}/snaps/{task._episode_id}/timestep_{len(task._frames)}.png', obs[...,::-1])
+            sensor_obs = self._sim.get_sensor_observations()
+            task._frames.append({
+                "head_rgb": sensor_obs['head_rgb'][:,:,:3],
+                "head_depth": sensor_obs['head_depth'],
+                "third_rgb": sensor_obs['third_rgb'][:,:,:3],
+            })
+            is_interpolated = idx < num_steps - 1
+            self._max_displacement_along_axis_interp = self._max_displacement_along_axis * interpolation
+            self._max_turn_radians_interp = self._max_turn_radians * interpolation
 
-        # Do not allow small movements
-        if np.abs(ang_pos) < self._min_turn_radians:
-            ang_pos = 0
-        if np.linalg.norm([lin_pos_x, lin_pos_z]) < self._min_displacement:
-            lin_pos_x = 0
-            lin_pos_z = 0
+            lin_pos_x_new = (
+                np.clip(lin_pos_x, -1, 1) * self._max_displacement_along_axis_interp
+            )
+            lin_pos_z_new = (
+                np.clip(lin_pos_z, -1, 1) * self._max_displacement_along_axis_interp
+            )
+            ang_pos = np.clip(turn, -1, 1) * self._max_turn_radians_interp
+            
+            # # Do not allow small movements
+            # if np.abs(ang_pos) < self._min_turn_radians:
+            #     ang_pos = 0
+            # if np.linalg.norm([lin_pos_x, lin_pos_z]) < self._min_displacement:
+            #     lin_pos_x = 0
+            #     lin_pos_z = 0
 
-        if not self._allow_back:
-            lin_pos_x = np.maximum(lin_pos_x, 0)
+            if not self._allow_back:
+                lin_pos_x_new = np.maximum(lin_pos_x_new, 0)
 
-        # Get the transformation of the robot
-        base_trans = self._sim.articulated_agent.base_transformation
-        obj_trans = self.cur_articulated_agent.sim_obj.transformation
-        # Get the global pos from the local target waypoints
-        target_pos = base_trans.transform_point(
-            mn.Vector3([lin_pos_x, lin_pos_z, 0])
-        )
-        target_rot = obj_trans.rotation()
-        rot_quat = mn.Quaternion(
-            mn.Vector3(0, np.sin(ang_pos / 2), 0), np.cos(ang_pos / 2)
-        )
-        # Get the target rotation
-        target_rot = rot_quat.to_matrix() @ obj_trans.rotation()
+            # Get the transformation of the articulated agent
+            base_trans = self._sim.articulated_agent.base_transformation
+            obj_trans = self.cur_articulated_agent.sim_obj.transformation
+            # Get the global pos from the local target waypoints
+            target_pos = base_trans.transform_point(
+                mn.Vector3([lin_pos_x_new, lin_pos_z_new, 0])
+            )
+            target_rot = obj_trans.rotation()
+            rot_quat = mn.Quaternion(
+                mn.Vector3(0, np.sin(ang_pos / 2), 0), np.cos(ang_pos / 2)
+            )
+            # Get the target rotation
+            target_rot = rot_quat.to_matrix() @ obj_trans.rotation()
 
-        # combine target translation and rotation to get target rigid state
-        target_rigid_state = habitat_sim.RigidState(
-            mn.Quaternion.from_matrix(target_rot), target_pos
-        )
+            # combine target translation and rotation to get target rigid state
+            target_rigid_state = habitat_sim.RigidState(
+                mn.Quaternion.from_matrix(target_rot), target_pos
+            )
 
-        if self._constraint_base_in_manip_mode and task._in_manip_mode:
-            lin_pos_x = 0.0
-            lin_pos_z = 0.0
-            ang_pos = 0.0
-
-        if lin_pos_x != 0.0 or lin_pos_z != 0.0 or ang_pos != 0.0:
-            task._is_navmesh_violated = self.update_base(target_rigid_state)
-        else:
-            # no violation if no movement was required in the first place
-            task._is_navmesh_violated = False
-
+            if self._constraint_base_in_manip_mode and task._in_manip_mode:
+                lin_pos_x = 0.0
+                lin_pos_z = 0.0
+                ang_pos = 0.0
+                
+            if lin_pos_x != 0.0 or lin_pos_z != 0.0 or ang_pos != 0.0:
+                task._is_navmesh_violated = self.update_base(target_rigid_state)
+                self._sim.maybe_update_articulated_agent()
+            else:
+                # no violation if no movement was required in the first place
+                task._is_navmesh_violated = False
+            task._metrics_at_step.append(task.report_metrics_at_step(action=self, is_interpolated=is_interpolated))
 
 class HumanoidJointAction(ArticulatedAgentAction):
     def __init__(self, *args, sim: RearrangeSim, **kwargs):
